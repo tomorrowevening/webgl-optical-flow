@@ -128,7 +128,7 @@ export default class WebGLApp {
       uniforms: {
         current: { value: this.opticalFlowFadeBlurFBO.texture },
         prev: { value: this.opticalFlowFadePrevFBO.texture },
-        fade: { value: 0.05 },
+        fade: { value: 0.01 },
       },
     })
     this.opticalFlowFade = new Pass(this.opticalFlowFadeMat)
@@ -188,7 +188,7 @@ export default class WebGLApp {
       uniforms: {
         map: { value: null },
         opticalFlow: { value: this.opticalFlowFadeFBO.texture },
-        scale: { value: 1 },
+        scale: { value: 0.1 },
       },
     })
     const opticalFlowImg = new Mesh(geom, this.opticalFlowImgMat)
