@@ -170,7 +170,7 @@ export class Pass {
   draw(renderer: WebGLRenderer, target?: WebGLRenderTarget) {
     if (target !== undefined) {
       renderer.setRenderTarget(target);
-      renderer.clear();
+      // renderer.clear();
     }
     renderer.render(this.scene, this.camera);
   }
@@ -195,6 +195,7 @@ export class FBO {
 
   constructor(width: number, height: number, params?: RenderTargetOptions) {
     this.rt1 = new WebGLRenderTarget(width, height, params);
+    this.rt1.texture.name = 'rt1'
     this.target = this.rt1;
   }
 
@@ -221,11 +222,14 @@ export class FBO {
  */
 export class DoubleFBO extends FBO {
   rt2: WebGLRenderTarget;
+  other: WebGLRenderTarget;
   flip = true;
 
   constructor(width: number, height: number, params?: RenderTargetOptions) {
     super(width, height, params);
     this.rt2 = this.rt1.clone();
+    this.rt2.texture.name = 'rt2'
+    this.other = this.rt2;
   }
 
   override dispose() {
@@ -249,9 +253,15 @@ export class DoubleFBO extends FBO {
   swap() {
     if (this.flip) {
       this.target = this.rt2;
+      this.other = this.rt1;
     } else {
       this.target = this.rt1;
+      this.other = this.rt2;
     }
     this.flip = !this.flip;
+  }
+
+  get otherTexture(): Texture {
+    return this.other.texture;
   }
 }

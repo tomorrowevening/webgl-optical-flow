@@ -4,7 +4,7 @@ import { Pane } from 'tweakpane'
 import glsl from 'glslify'
 import vertex from './glsl/default.vert'
 import flow from './glsl/flow.frag'
-// import fade from './glsl/fade.frag'
+import fade from './glsl/fade.frag'
 import { FBO, Pass } from './utils';
 import DisplayMaterial from './materials/DisplayMaterial';
 
@@ -21,15 +21,21 @@ export default class WebGLApp {
   private currentFBO!: FBO
   private prevFBO!: FBO
   private opticalFlowFBO!: FBO
+  private opticalFlowFadeFBO!: FBO
+  private opticalFlowFadePrevFBO!: FBO
   // Shaders
   private opticalFlowMat!: ShaderMaterial
-  // private opticalFlowFadeMat!: ShaderMaterial
+  private opticalFlowFadeMat!: ShaderMaterial
 
   // App
   private currentMesh!: Mesh
+  private currentMeshRT!: Mesh
   private prevMesh!: Mesh
+  private opticalFlowFadeMesh!: Mesh
+  private opticalFlowFadeMeshRT!: Mesh
   private cameraPass!: Pass
   private opticalFlow!: Pass
+  private opticalFlowFade!: Pass
 
   // Elements
   private canvas: HTMLCanvasElement
@@ -56,7 +62,7 @@ export default class WebGLApp {
     this.renderer.localClippingEnabled = true;
     this.renderer.outputColorSpace = LinearSRGBColorSpace;
     this.renderer.setClearColor(0x101010);
-    this.renderer.setClearAlpha(1);
+    this.renderer.setClearAlpha(0);
     this.renderer.setPixelRatio(devicePixelRatio)
     ColorManagement.enabled = false;
 
@@ -78,6 +84,12 @@ export default class WebGLApp {
     this.opticalFlowFBO = new FBO(640, 480, { depthBuffer: false, stencilBuffer: false })
     this.opticalFlowFBO.texture.name = 'opticalFlow'
 
+    this.opticalFlowFadeFBO = new FBO(640, 480, { depthBuffer: false, stencilBuffer: false })
+    this.opticalFlowFadeFBO.texture.name = 'opticalFlowFade'
+
+    this.opticalFlowFadePrevFBO = new FBO(640, 480, { depthBuffer: false, stencilBuffer: false })
+    this.opticalFlowFadePrevFBO.texture.name = 'opticalFlowFadePrev'
+
     // Render Passes
     const cameraMat = new MeshBasicMaterial({ map: new VideoTexture(this.video), name: 'video' })
     this.cameraPass = new Pass(cameraMat)
@@ -94,6 +106,18 @@ export default class WebGLApp {
       },
     })
     this.opticalFlow = new Pass(this.opticalFlowMat)
+
+    this.opticalFlowFadeMat = new ShaderMaterial({
+      name: 'opticalFlowFade',
+      vertexShader: glsl(vertex),
+      fragmentShader: glsl(fade),
+      uniforms: {
+        current: { value: this.opticalFlowFBO.texture },
+        prev: { value: this.opticalFlowFadePrevFBO.texture },
+        fade: { value: 10 / 255 },
+      },
+    })
+    this.opticalFlowFade = new Pass(this.opticalFlowFadeMat)
   }
 
   private setupScene() {
@@ -109,6 +133,11 @@ export default class WebGLApp {
     this.currentMesh.scale.setScalar(0.5)
     this.scene.add(this.currentMesh)
 
+    this.currentMeshRT = this.currentMesh.clone()
+    this.currentMeshRT.name = 'currentMeshRT'
+    this.currentMeshRT.position.set(0, 0, 0)
+    this.currentMeshRT.scale.setScalar(1)
+
     this.prevMesh = new Mesh(geom, new DisplayMaterial('prevRT', this.prevFBO.texture))
     this.prevMesh.name = 'prevMesh'
     this.prevMesh.position.set(0, -250, 0)
@@ -120,6 +149,17 @@ export default class WebGLApp {
     opticalFlow.position.set(330, 0, 0)
     opticalFlow.scale.setScalar(0.5)
     this.scene.add(opticalFlow)
+
+    this.opticalFlowFadeMesh = new Mesh(geom, new DisplayMaterial('opticalFlowFadeRT', this.opticalFlowFadeFBO.texture))
+    this.opticalFlowFadeMesh.name = 'opticalFlowFade'
+    this.opticalFlowFadeMesh.position.set(330, -250, 0)
+    this.opticalFlowFadeMesh.scale.setScalar(0.5)
+    this.scene.add(this.opticalFlowFadeMesh)
+
+    this.opticalFlowFadeMeshRT = this.opticalFlowFadeMesh.clone()
+    this.opticalFlowFadeMeshRT.name = 'opticalFlowFadeMeshRT'
+    this.opticalFlowFadeMeshRT.position.set(0, 0, 0)
+    this.opticalFlowFadeMeshRT.scale.setScalar(1)
   }
 
   private setupDebug() {
@@ -140,6 +180,12 @@ export default class WebGLApp {
       step: 0.001,
       label: 'Offset',
     })
+    opticalFlow.addBinding(this, 'flowFadeAmount', {
+      min: 0,
+      max: 1,
+      step: 0.001,
+      label: 'Fade Amount',
+    })
   }
 
   dispose() {
@@ -151,17 +197,17 @@ export default class WebGLApp {
   }
 
   update() {
-    // const time = this.clock.getElapsedTime()
-    // this.opticalFlowFadeMat.uniforms.time.value = time
-
-    // Update RTs
+    // Update previous shots
     this.renderer.setRenderTarget(this.prevFBO.target)
-    this.currentMesh.scale.setScalar(1)
-    this.renderer.render(this.currentMesh, this.feedCamera)
-    this.currentMesh.scale.setScalar(0.5)
+    this.renderer.render(this.currentMeshRT, this.feedCamera)
 
+    this.renderer.setRenderTarget(this.opticalFlowFadePrevFBO.target)
+    this.renderer.render(this.opticalFlowFadeMeshRT, this.feedCamera)
+
+    // Update passes
     this.cameraPass.draw(this.renderer, this.currentFBO.target)
     this.opticalFlow.draw(this.renderer, this.opticalFlowFBO.target)
+    this.opticalFlowFade.draw(this.renderer, this.opticalFlowFadeFBO.target)
   }
 
   draw() {
@@ -177,5 +223,13 @@ export default class WebGLApp {
     this.camera.bottom = -height
     this.camera.updateProjectionMatrix()
     this.renderer.setSize(width, height)
+  }
+
+  get flowFadeAmount(): number {
+    return this.opticalFlowFadeMat.uniforms.fade.value
+  }
+
+  set flowFadeAmount(value: number) {
+    this.opticalFlowFadeMat.uniforms.fade.value = value
   }
 }
