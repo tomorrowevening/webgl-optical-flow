@@ -1,3 +1,5 @@
+precision lowp float;
+
 uniform sampler2D map;
 uniform sampler2D opticalFlow;
 uniform float scale;

@@ -1,3 +1,5 @@
+precision lowp float;
+
 uniform sampler2D current;
 uniform sampler2D prev;
 uniform float fade;

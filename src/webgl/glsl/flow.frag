@@ -1,3 +1,5 @@
+precision highp float;
+
 uniform sampler2D current;
 uniform sampler2D prev;
 uniform float offset;
@@ -7,5 +9,6 @@ varying vec2 vUv;
 #include ./opticalFlow.glsl;
 
 void main() {
-  gl_FragColor = vec4(opticalFlow(vUv, current, prev, offset, lambda), 0.0, 1.0);
+  vec2 flow = opticalFlow(vUv, current, prev, offset, lambda);
+  gl_FragColor = vec4(flow, 0.0, 1.0);
 }

@@ -1,9 +1,9 @@
-import { ShaderMaterial, Texture } from 'three'
+import { RawShaderMaterial, Texture } from 'three'
 import glsl from 'glslify'
-import vertex from '../glsl/default.vert'
+import vertex from '../glsl/defaultRaw.vert'
 import fade from '../glsl/fade.frag'
 
-export default class OpticalFlowFadeMaterial extends ShaderMaterial {
+export default class OpticalFlowFadeMaterial extends RawShaderMaterial {
   constructor() {
     super({
       name: 'opticalFlowFade',
