@@ -35,15 +35,15 @@ export default class WebGLApp {
 
   // Mesh
   private currentMesh!: Mesh
-  private currentMeshRT!: Mesh
   private prevMesh!: Mesh
   private opticalFlowFadeMesh!: Mesh
-  private opticalFlowFadeMeshRT!: Mesh
 
   // Passes
   private cameraPass!: Pass
   private opticalFlow!: Pass
   private opticalFlowFade!: Pass
+  private prevCameraPass!: Pass
+  private prevOpticalFlowFade!: Pass
 
   // Elements
   private canvas: HTMLCanvasElement
@@ -126,13 +126,11 @@ export default class WebGLApp {
     const geom = new PlaneGeometry(640, 480)
     geom.applyMatrix4(new Matrix4().makeTranslation(320, -240, 0))
 
-    this.currentMesh = new Mesh(geom, new DisplayMaterial('Display/currentRT', this.currentFBO.texture))
+    const currentMeshMat = new DisplayMaterial('Display/currentRT', this.currentFBO.texture)
+    this.currentMesh = new Mesh(geom, currentMeshMat)
     this.currentMesh.position.set(0, 0, 0)
     this.currentMesh.scale.setScalar(0.5)
     this.scene.add(this.currentMesh)
-
-    // Not visible
-    this.currentMeshRT = new Mesh(geom, new DisplayMaterial('OF/currentRT', this.currentFBO.texture))
 
     this.prevMesh = new Mesh(geom, new DisplayMaterial('Display/prevRT', this.prevFBO.texture))
     this.prevMesh.position.set(0, -250, 0)
@@ -144,13 +142,14 @@ export default class WebGLApp {
     opticalFlow.scale.setScalar(0.5)
     this.scene.add(opticalFlow)
 
-    this.opticalFlowFadeMesh = new Mesh(geom, new DisplayMaterial('Display/opticalFlowFadeRT', this.opticalFlowFadeFBO.texture))
+    const opticalFlowFadeMeshMat = new DisplayMaterial('Display/opticalFlowFadeRT', this.opticalFlowFadeFBO.texture)
+    this.opticalFlowFadeMesh = new Mesh(geom, opticalFlowFadeMeshMat)
     this.opticalFlowFadeMesh.position.set(330, -250, 0)
     this.opticalFlowFadeMesh.scale.setScalar(0.5)
     this.scene.add(this.opticalFlowFadeMesh)
 
-    // Not visible
-    this.opticalFlowFadeMeshRT = new Mesh(geom, new DisplayMaterial('OF/opticalFlowFadeRT', this.opticalFlowFadeFBO.texture))
+    this.prevCameraPass = new Pass(currentMeshMat)
+    this.prevOpticalFlowFade = new Pass(opticalFlowFadeMeshMat)
 
     // Applied Optical Flow to an image
     this.opticalFlowImgMat = new OpticalFlowImg()
@@ -202,21 +201,25 @@ export default class WebGLApp {
     dispose(this.scene)
     this.debug.dispose()
     this.renderer.dispose()
+    // FBOs
     this.currentFBO.dispose()
     this.prevFBO.dispose()
     this.opticalFlowFBO.dispose()
     this.opticalFlowFadeFBO.dispose()
     this.opticalFlowFadeBlurFBO.dispose()
     this.opticalFlowFadePrevFBO.dispose()
+    // Passes
+    this.cameraPass.dispose()
+    this.opticalFlow.dispose()
+    this.opticalFlowFade.dispose()
+    this.prevCameraPass.dispose()
+    this.prevOpticalFlowFade.dispose()
   }
 
   update() {
     // Update previous shots
-    this.renderer.setRenderTarget(this.prevFBO.target)
-    this.renderer.render(this.currentMeshRT, this.feedCamera)
-
-    this.renderer.setRenderTarget(this.opticalFlowFadePrevFBO.target)
-    this.renderer.render(this.opticalFlowFadeMeshRT, this.feedCamera)
+    this.prevCameraPass.draw(this.renderer, this.prevFBO.target)
+    this.prevOpticalFlowFade.draw(this.renderer, this.opticalFlowFadePrevFBO.target)
 
     // Update passes
     this.cameraPass.draw(this.renderer, this.currentFBO.target)

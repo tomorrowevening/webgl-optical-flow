@@ -167,11 +167,8 @@ export class Pass {
   /**
    * The customized draw call for the pass, usually so params can be updated/swapped
    */
-  draw(renderer: WebGLRenderer, target?: WebGLRenderTarget) {
-    if (target !== undefined) {
-      renderer.setRenderTarget(target);
-      // renderer.clear();
-    }
+  draw(renderer: WebGLRenderer, target: WebGLRenderTarget | null) {
+    renderer.setRenderTarget(target);
     renderer.render(this.scene, this.camera);
   }
 
