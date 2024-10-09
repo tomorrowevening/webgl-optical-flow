@@ -25,17 +25,20 @@ export default class WebGLApp {
   private opticalFlowFadeFBO!: FBO
   private opticalFlowFadeBlurFBO!: FBO
   private opticalFlowFadePrevFBO!: FBO
+
   // Shaders
   private opticalFlowMat!: ShaderMaterial
   private opticalFlowFadeMat!: ShaderMaterial
   private opticalFlowBlur!: BlurEffect
 
-  // App
+  // Mesh
   private currentMesh!: Mesh
   private currentMeshRT!: Mesh
   private prevMesh!: Mesh
   private opticalFlowFadeMesh!: Mesh
   private opticalFlowFadeMeshRT!: Mesh
+
+  // Passes
   private cameraPass!: Pass
   private opticalFlow!: Pass
   private opticalFlowFade!: Pass
