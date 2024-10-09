@@ -1,13 +1,17 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Clock, ColorManagement, LinearSRGBColorSpace, Matrix4, Mesh, MeshBasicMaterial, OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, VideoTexture, WebGLRenderer } from 'three';
+import { Clock, ColorManagement, LinearSRGBColorSpace, Matrix4, Mesh, MeshBasicMaterial, OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, Texture, TextureLoader, VideoTexture, WebGLRenderer } from 'three';
 import { Pane } from 'tweakpane'
 import glsl from 'glslify'
+// Materials
+import DisplayMaterial from './materials/DisplayMaterial';
+import BlurEffect from './materials/BlurEffect';
+// Shaders
 import vertex from './glsl/default.vert'
 import flow from './glsl/flow.frag'
 import fade from './glsl/fade.frag'
+import flowImg from './glsl/flowImg.frag'
+// Utils
 import { FBO, Pass } from './utils';
-import DisplayMaterial from './materials/DisplayMaterial';
-import BlurEffect from './materials/BlurEffect';
 
 export default class WebGLApp {
   // Core
@@ -30,6 +34,7 @@ export default class WebGLApp {
   private opticalFlowMat!: ShaderMaterial
   private opticalFlowFadeMat!: ShaderMaterial
   private opticalFlowBlur!: BlurEffect
+  private opticalFlowImgMat!: ShaderMaterial
 
   // Mesh
   private currentMesh!: Mesh
@@ -123,7 +128,7 @@ export default class WebGLApp {
       uniforms: {
         current: { value: this.opticalFlowFadeBlurFBO.texture },
         prev: { value: this.opticalFlowFadePrevFBO.texture },
-        fade: { value: 1 / 255 },
+        fade: { value: 0.05 },
       },
     })
     this.opticalFlowFade = new Pass(this.opticalFlowFadeMat)
@@ -145,6 +150,7 @@ export default class WebGLApp {
     this.currentMesh.scale.setScalar(0.5)
     this.scene.add(this.currentMesh)
 
+    // Not visible
     this.currentMeshRT = this.currentMesh.clone()
     this.currentMeshRT.name = 'currentMeshRT'
     this.currentMeshRT.position.set(0, 0, 0)
@@ -168,10 +174,33 @@ export default class WebGLApp {
     this.opticalFlowFadeMesh.scale.setScalar(0.5)
     this.scene.add(this.opticalFlowFadeMesh)
 
+    // Not visible
     this.opticalFlowFadeMeshRT = this.opticalFlowFadeMesh.clone()
     this.opticalFlowFadeMeshRT.name = 'opticalFlowFadeMeshRT'
     this.opticalFlowFadeMeshRT.position.set(0, 0, 0)
     this.opticalFlowFadeMeshRT.scale.setScalar(1)
+
+    // Applied Optical Flow to an image
+    this.opticalFlowImgMat = new ShaderMaterial({
+      name: 'opticalFlowImg',
+      vertexShader: glsl(vertex),
+      fragmentShader: glsl(flowImg),
+      uniforms: {
+        map: { value: null },
+        opticalFlow: { value: this.opticalFlowFadeFBO.texture },
+        scale: { value: 1 },
+      },
+    })
+    const opticalFlowImg = new Mesh(geom, this.opticalFlowImgMat)
+    opticalFlowImg.name = 'opticalFlowImg'
+    opticalFlowImg.position.set(660, 0, 0)
+    opticalFlowImg.scale.setScalar(0.5)
+    this.scene.add(opticalFlowImg)
+
+    new TextureLoader()
+      .load('./fpo.jpg', (data: Texture) => {
+        this.opticalFlowImgMat.uniforms.map.value = data
+      })
   }
 
   private setupDebug() {
@@ -197,6 +226,12 @@ export default class WebGLApp {
       max: 1,
       step: 0.001,
       label: 'Fade Amount',
+    })
+    opticalFlow.addBinding(this, 'opticalFlowScale', {
+      min: 0,
+      max: 3,
+      step: 0.001,
+      label: 'Optical Flow Scale',
     })
   }
 
@@ -244,5 +279,13 @@ export default class WebGLApp {
 
   set flowFadeAmount(value: number) {
     this.opticalFlowFadeMat.uniforms.fade.value = value
+  }
+
+  get opticalFlowScale(): number {
+    return this.opticalFlowImgMat.uniforms.scale.value
+  }
+
+  set opticalFlowScale(value: number) {
+    this.opticalFlowImgMat.uniforms.scale.value = value
   }
 }

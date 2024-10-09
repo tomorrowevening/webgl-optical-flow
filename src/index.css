@@ -60,14 +60,15 @@ button {
 }
 
 ul {
+  mix-blend-mode: difference;
   pointer-events: none;
   position: absolute;
   left: 0;
   top: 0;
   z-index: 3;
   display: grid;
-  grid-template-columns: repeat(2, 330px);
-  grid-template-rows: 250px;
+  grid-template-rows: repeat(2, 1fr);
+  grid-auto-flow: column;
   list-style-type: none;
   width: 700px;
   margin: 0;

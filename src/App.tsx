@@ -38,9 +38,10 @@ function App() {
       )}
       <ul>
         <li>Current Frame</li>
-        <li>Current Optical Flow</li>
         <li>Previous Frame</li>
+        <li>Current Optical Flow</li>
         <li>Accumulated Optical Flow</li>
+        <li>Applied Optical Flow</li>
       </ul>
     </>
   )
