@@ -126,47 +126,36 @@ export default class WebGLApp {
     const geom = new PlaneGeometry(640, 480)
     geom.applyMatrix4(new Matrix4().makeTranslation(320, -240, 0))
 
-    this.currentMesh = new Mesh(geom, new DisplayMaterial('currentRT', this.currentFBO.texture))
-    this.currentMesh.name = 'currentMesh'
+    this.currentMesh = new Mesh(geom, new DisplayMaterial('Display/currentRT', this.currentFBO.texture))
     this.currentMesh.position.set(0, 0, 0)
     this.currentMesh.scale.setScalar(0.5)
     this.scene.add(this.currentMesh)
 
     // Not visible
-    this.currentMeshRT = this.currentMesh.clone()
-    this.currentMeshRT.name = 'currentMeshRT'
-    this.currentMeshRT.position.set(0, 0, 0)
-    this.currentMeshRT.scale.setScalar(1)
+    this.currentMeshRT = new Mesh(geom, new DisplayMaterial('OF/currentRT', this.currentFBO.texture))
 
-    this.prevMesh = new Mesh(geom, new DisplayMaterial('prevRT', this.prevFBO.texture))
-    this.prevMesh.name = 'prevMesh'
+    this.prevMesh = new Mesh(geom, new DisplayMaterial('Display/prevRT', this.prevFBO.texture))
     this.prevMesh.position.set(0, -250, 0)
     this.prevMesh.scale.setScalar(0.5)
     this.scene.add(this.prevMesh)
 
-    const opticalFlow = new Mesh(geom, new DisplayMaterial('opticalFlowRT', this.opticalFlowFBO.texture))
-    opticalFlow.name = 'opticalFlow'
+    const opticalFlow = new Mesh(geom, new DisplayMaterial('Display/opticalFlowRT', this.opticalFlowFBO.texture))
     opticalFlow.position.set(330, 0, 0)
     opticalFlow.scale.setScalar(0.5)
     this.scene.add(opticalFlow)
 
-    this.opticalFlowFadeMesh = new Mesh(geom, new DisplayMaterial('opticalFlowFadeRT', this.opticalFlowFadeFBO.texture))
-    this.opticalFlowFadeMesh.name = 'opticalFlowFade'
+    this.opticalFlowFadeMesh = new Mesh(geom, new DisplayMaterial('Display/opticalFlowFadeRT', this.opticalFlowFadeFBO.texture))
     this.opticalFlowFadeMesh.position.set(330, -250, 0)
     this.opticalFlowFadeMesh.scale.setScalar(0.5)
     this.scene.add(this.opticalFlowFadeMesh)
 
     // Not visible
-    this.opticalFlowFadeMeshRT = this.opticalFlowFadeMesh.clone()
-    this.opticalFlowFadeMeshRT.name = 'opticalFlowFadeMeshRT'
-    this.opticalFlowFadeMeshRT.position.set(0, 0, 0)
-    this.opticalFlowFadeMeshRT.scale.setScalar(1)
+    this.opticalFlowFadeMeshRT = new Mesh(geom, new DisplayMaterial('OF/opticalFlowFadeRT', this.opticalFlowFadeFBO.texture))
 
     // Applied Optical Flow to an image
     this.opticalFlowImgMat = new OpticalFlowImg()
     this.opticalFlowImgMat.opticalFlow = this.opticalFlowFadeFBO.texture
     const opticalFlowImg = new Mesh(geom, this.opticalFlowImgMat)
-    opticalFlowImg.name = 'opticalFlowImg'
     opticalFlowImg.position.set(660, 0, 0)
     opticalFlowImg.scale.setScalar(0.5)
     this.scene.add(opticalFlowImg)
