@@ -36,6 +36,12 @@ function App() {
           })
         }}>Connect Camera</button>
       )}
+      <ul>
+        <li>Current Frame</li>
+        <li>Current Optical Flow</li>
+        <li>Previous Frame</li>
+        <li>Accumulated Optical Flow</li>
+      </ul>
     </>
   )
 }

@@ -7,6 +7,7 @@ import flow from './glsl/flow.frag'
 import fade from './glsl/fade.frag'
 import { FBO, Pass } from './utils';
 import DisplayMaterial from './materials/DisplayMaterial';
+import BlurEffect from './materials/BlurEffect';
 
 export default class WebGLApp {
   // Core
@@ -22,10 +23,12 @@ export default class WebGLApp {
   private prevFBO!: FBO
   private opticalFlowFBO!: FBO
   private opticalFlowFadeFBO!: FBO
+  private opticalFlowFadeBlurFBO!: FBO
   private opticalFlowFadePrevFBO!: FBO
   // Shaders
   private opticalFlowMat!: ShaderMaterial
   private opticalFlowFadeMat!: ShaderMaterial
+  private opticalFlowBlur!: BlurEffect
 
   // App
   private currentMesh!: Mesh
@@ -87,6 +90,9 @@ export default class WebGLApp {
     this.opticalFlowFadeFBO = new FBO(640, 480, { depthBuffer: false, stencilBuffer: false })
     this.opticalFlowFadeFBO.texture.name = 'opticalFlowFade'
 
+    this.opticalFlowFadeBlurFBO = new FBO(640, 480, { depthBuffer: false, stencilBuffer: false })
+    this.opticalFlowFadeBlurFBO.texture.name = 'opticalFlowFadeBlur'
+
     this.opticalFlowFadePrevFBO = new FBO(640, 480, { depthBuffer: false, stencilBuffer: false })
     this.opticalFlowFadePrevFBO.texture.name = 'opticalFlowFadePrev'
 
@@ -112,12 +118,15 @@ export default class WebGLApp {
       vertexShader: glsl(vertex),
       fragmentShader: glsl(fade),
       uniforms: {
-        current: { value: this.opticalFlowFBO.texture },
+        current: { value: this.opticalFlowFadeBlurFBO.texture },
         prev: { value: this.opticalFlowFadePrevFBO.texture },
-        fade: { value: 10 / 255 },
+        fade: { value: 1 / 255 },
       },
     })
     this.opticalFlowFade = new Pass(this.opticalFlowFadeMat)
+
+    this.opticalFlowBlur = new BlurEffect(640, 480)
+    this.opticalFlowBlur.texture = this.opticalFlowFBO.texture
   }
 
   private setupScene() {
@@ -207,6 +216,7 @@ export default class WebGLApp {
     // Update passes
     this.cameraPass.draw(this.renderer, this.currentFBO.target)
     this.opticalFlow.draw(this.renderer, this.opticalFlowFBO.target)
+    this.opticalFlowBlur.draw(this.renderer, this.opticalFlowFadeBlurFBO.target)
     this.opticalFlowFade.draw(this.renderer, this.opticalFlowFadeFBO.target)
   }
 

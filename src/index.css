@@ -58,3 +58,26 @@ button {
   transform: translate(-50%, 0%);
   z-index: 2;
 }
+
+ul {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(2, 330px);
+  grid-template-rows: 250px;
+  list-style-type: none;
+  width: 700px;
+  margin: 0;
+  padding: 0;
+}
+
+li {
+  font-size: 12px;
+  font-weight: bold;
+  padding: 5px;
+  width: 320px;
+  height: 240px;
+}
