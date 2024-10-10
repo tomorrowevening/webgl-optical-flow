@@ -10,5 +10,6 @@ varying vec2 vUv;
 
 void main() {
   vec2 flow = opticalFlow(vUv, current, prev, offset, lambda);
-  gl_FragColor = vec4(flow, 0.0, 1.0);
+  float velocityLen = clamp(1.0 - pow(1.0 - min(1.0, length(flow)), 3.0), 0.0, 1.0);
+  gl_FragColor = vec4(flow, velocityLen, 1.0);
 }
