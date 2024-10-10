@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Clock, ColorManagement, LinearSRGBColorSpace, Matrix4, Mesh, MeshBasicMaterial, OrthographicCamera, PlaneGeometry, Scene, Texture, TextureLoader, VideoTexture, WebGLRenderer } from 'three';
+import { Clock, ColorManagement, HalfFloatType, LinearSRGBColorSpace, Matrix4, Mesh, MeshBasicMaterial, OrthographicCamera, PlaneGeometry, Scene, Texture, TextureLoader, VideoTexture, WebGLRenderer } from 'three';
 import { Pane } from 'tweakpane';
 // Materials
 import BlurEffect from './materials/BlurEffect';
@@ -17,7 +17,6 @@ export default class WebGLApp {
   private renderer!: WebGLRenderer
   private scene!: Scene
   private camera!: OrthographicCamera
-  private feedCamera!: OrthographicCamera
 
   // Render Targets
   private currentFBO!: FBO
@@ -64,6 +63,7 @@ export default class WebGLApp {
   private setupCore() {
     this.renderer = new WebGLRenderer({
       canvas: this.canvas,
+      depth: false,
       stencil: false,
     })
     this.renderer.autoClear = false;
@@ -76,29 +76,28 @@ export default class WebGLApp {
 
     this.camera = new OrthographicCamera(0, window.innerWidth, 0, -window.innerHeight, 1, 100)
     this.camera.position.z = 10
-
-    this.feedCamera = new OrthographicCamera(0, 640, 0, -480, 1, 100)
-    this.feedCamera.position.set(0, 0, 10)
   }
 
   private setupPasses() {
+    const fpoSettings = { depthBuffer: false, stencilBuffer: false, type: HalfFloatType }
+
     // Render Targets
-    this.currentFBO = new FBO(640, 480, { depthBuffer: false, stencilBuffer: false })
+    this.currentFBO = new FBO(640, 480, fpoSettings)
     this.currentFBO.texture.name = 'current'
 
-    this.prevFBO = new FBO(640, 480, { depthBuffer: false, stencilBuffer: false })
+    this.prevFBO = new FBO(640, 480, fpoSettings)
     this.prevFBO.texture.name = 'prev'
 
-    this.opticalFlowFBO = new FBO(640, 480, { depthBuffer: false, stencilBuffer: false })
+    this.opticalFlowFBO = new FBO(640, 480, fpoSettings)
     this.opticalFlowFBO.texture.name = 'opticalFlow'
 
-    this.opticalFlowFadeFBO = new FBO(640, 480, { depthBuffer: false, stencilBuffer: false })
+    this.opticalFlowFadeFBO = new FBO(640, 480, fpoSettings)
     this.opticalFlowFadeFBO.texture.name = 'opticalFlowFade'
 
-    this.opticalFlowFadeBlurFBO = new FBO(640, 480, { depthBuffer: false, stencilBuffer: false })
+    this.opticalFlowFadeBlurFBO = new FBO(640, 480, fpoSettings)
     this.opticalFlowFadeBlurFBO.texture.name = 'opticalFlowFadeBlur'
 
-    this.opticalFlowFadePrevFBO = new FBO(640, 480, { depthBuffer: false, stencilBuffer: false })
+    this.opticalFlowFadePrevFBO = new FBO(640, 480, fpoSettings)
     this.opticalFlowFadePrevFBO.texture.name = 'opticalFlowFadePrev'
 
     // Render Passes
