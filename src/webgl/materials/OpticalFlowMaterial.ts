@@ -12,7 +12,7 @@ export default class OpticalFlowMaterial extends RawShaderMaterial {
       uniforms: {
         current: { value: null },
         prev: { value: null },
-        offset: { value: 0.1 },
+        offset: { value: -0.1 },
         lambda: { value: 0.001 },
       },
     })
