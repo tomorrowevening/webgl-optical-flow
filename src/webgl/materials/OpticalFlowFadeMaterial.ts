@@ -12,7 +12,7 @@ export default class OpticalFlowFadeMaterial extends RawShaderMaterial {
       uniforms: {
         current: { value: null },
         prev: { value: null },
-        fade: { value: 0.01 },
+        fade: { value: 0.05 },
       },
     })
   }
